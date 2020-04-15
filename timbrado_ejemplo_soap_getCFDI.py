@@ -13,6 +13,8 @@ from os import path
 import os
 import time;
 from lxml import etree
+from zipfile import ZipFile #necesario para extraer el zip donde viene el XML timbrado
+
 #Para evitar colocar accesos directamente en codigo se lee de un archivo.
 if not path.exists('config.ini'):
     print ("Archivo de configuracion no existe")
@@ -31,7 +33,8 @@ else:
     try:
         #Para este ejmplo se envia a timbrar un XML ya sellado  desde una ruta:
         xml_path = os.path.join(xmlDIR,"assets/CFDI33_sellado.xml")
-        destino_path = os.path.join(xmlDIR,"assets/CFDI33_timbrado.xml")
+        zipPath = os.path.join(xmlDIR,"assets/CFDI33_timbrado.zip")
+        destino_path = os.path.join(xmlDIR,"assets/")
         
         serie = "" #Serie vacia para usuarios de timbrado    
         
@@ -51,13 +54,17 @@ else:
         )
         #Se pasan los parametros requeridos para el metodo de timbrado getCFDI()
         result = client.service.getCFDI(usuario, password, xml_bytesArray, serie, idEquipo)
-        #Se recibe el xml en caso de ser timbrado
+        #Se recibe el xml en caso de ser timbrado(viene dentro de un zip)
         if result != None:
             
-            f = open(destino_path, 'wb')
+            f = open(zipPath, 'wb')
             writer = io.BufferedWriter(f)
             writer.write(result)
             writer.close()
+            #una vez escrito el zip, debemos extraer el XML timbrado
+            with ZipFile(zipPath, 'r') as zipObj:
+                zipObj.extractall(destino_path)
+
             print("Comprobante almacenado en su sistema.")
 
     except Fault as fault:
@@ -74,7 +81,7 @@ else:
 #Para extraer xml timbrado en caso de utilizar el metodo getCFDISign()    
 #    if timbrado != None:
         
-#        f = open(destino_path, 'wb')
+#        f = open(zipPath, 'wb')
 #        writer = io.BufferedWriter(f)
 #        writer.write(timbrado)
 #        writer.close()
