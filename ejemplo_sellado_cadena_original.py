@@ -17,7 +17,7 @@ def sellar(cadenaOriginal,llavePem,passw):
     signer = PKCS1_v1_5.new(private_key)
     sig = signer.sign(digest)
     #por ultimo se codifica en base64
-    return base64.encodebytes(sig)
+    return base64.b64encode(sig) #base64 sin nueva linea
 
 def generaCadenaOriginal(xml_filename):
     dom = ET.parse(xml_filename)
@@ -25,9 +25,12 @@ def generaCadenaOriginal(xml_filename):
     transform = ET.XSLT(xslt)
     return str(transform(dom))
     
-    
+ 
 
-cadenaOriginal=generaCadenaOriginal("./assets/CFDI33_sellado.xml")
+xmlPath="./assets/CFDI33_sellado.xml"
+cadenaOriginal=generaCadenaOriginal(xmlPath)
 sello=sellar(cadenaOriginal,"llave.pem","12345678a")
 print(cadenaOriginal)
 print(sello)
+
+
