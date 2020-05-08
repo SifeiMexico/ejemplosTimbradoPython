@@ -1,5 +1,5 @@
 import base64
-
+#instalar con > pip install pycryptodome que es mas nuevo y mantiene soporte a diferencia de pycrypto
 from Cryptodome.Hash import SHA256 
 from Cryptodome.Signature import PKCS1_v1_5
 from Cryptodome.PublicKey import RSA
