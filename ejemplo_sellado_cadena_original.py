@@ -8,32 +8,32 @@ from Cryptodome.IO import PEM
 from base64 import b64decode
 
 import lxml.etree as ET # para generar cadenaOriginal
+class CFDIUtils:
+    def sellar(self,cadenaOriginal,llavePem,passw,mode='PEM'):
+        digest = SHA256.new()
+        #print(cadenaOriginal)
+        digest.update(cadenaOriginal.encode('utf-8'))
+        read=''
+        if mode=='PEM':
+            read='r'
+        elif mode=='DER':
+            read='rb'
 
-def sellar(cadenaOriginal,llavePem,passw,mode='PEM'):
-    digest = SHA256.new()
-    #print(cadenaOriginal)
-    digest.update(cadenaOriginal.encode('utf-8'))
-    read=''
-    if mode=='PEM':
-        read='r'
-    elif mode=='DER':
-        read='rb'
+        else:
+            raise Exception('Modo no valido'+read)
+        with open (llavePem, read) as llavePEM:
+            private_key = RSA.importKey(llavePEM.read(),passw)
 
-    else:
-        raise Exception('Modo no valido'+read)
-    with open (llavePem, read) as llavePEM:
-        private_key = RSA.importKey(llavePEM.read(),passw)
+        signer = PKCS1_v1_5.new(private_key)
+        sig = signer.sign(digest)
+        #por ultimo se codifica en base64
+        return base64.b64encode(sig) #base64 sin nueva linea
 
-    signer = PKCS1_v1_5.new(private_key)
-    sig = signer.sign(digest)
-    #por ultimo se codifica en base64
-    return base64.b64encode(sig) #base64 sin nueva linea
-
-def generaCadenaOriginal(xml_filename):
-    dom = ET.parse(xml_filename)
-    xslt = ET.parse("./sat/xslt/cadenaoriginal_3_3.xslt")
-    transform = ET.XSLT(xslt)
-    return str(transform(dom))
+    def generaCadenaOriginal(self,xml_filename):
+        dom = ET.parse(xml_filename)
+        xslt = ET.parse("./sat/xslt/cadenaoriginal_3_3.xslt")
+        transform = ET.XSLT(xslt)
+        return str(transform(dom))
 
 def pegarSello(xml_filename,sello):
    dom = ET.parse(xml_filename)
@@ -47,14 +47,16 @@ def pegarSello(xml_filename,sello):
  
 
 xmlPath="./assets/CFDI33_sellado.xml"
-cadenaOriginal=generaCadenaOriginal(xmlPath)
+cfdiUtils= CFDIUtils()
+
+cadenaOriginal=cfdiUtils.generaCadenaOriginal(xmlPath)
 
 #con PEM,suponiendo que el pem no tenga password
 print("con pem:")
-sello=sellar(cadenaOriginal,"llave.pem",None)
+sello=cfdiUtils.sellar(cadenaOriginal,"llave.pem",None)
 print(sello)
 print('Con key(DER):')
-sello=sellar(cadenaOriginal,"CSD.key","12345678a",'DER')
+sello=cfdiUtils.sellar(cadenaOriginal,"CSD.key","12345678a",'DER')
 print(sello)
 
 
@@ -62,5 +64,8 @@ print(cadenaOriginal)
 
 pegarSello(xmlPath,sello)
 
-
-
+pemKeyWithPassPhrase=PEM.encode(open('key.key','rb').read(),'ENCRYPTED PRIVATE KEY')
+print(pemKeyWithPassPhrase)
+open('ENCRYPTED_KEY.pem','w').write(pemKeyWithPassPhrase)
+sello2=cfdiUtils.sellar(cadenaOriginal,"ENCRYPTED_KEY.pem","12345678a",'PEM')
+print(sello2)
